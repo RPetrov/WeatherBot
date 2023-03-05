@@ -3,5 +3,6 @@ fun main(args: Array<String>) {
     //проверка commit, push
     //проверка commit, push — artwist-polyakov
     //проверка commit, push после изменения версии JDK — artwist-polyakov
+    //проверка commit, push
 
 }
