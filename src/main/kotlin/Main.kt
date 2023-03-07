@@ -1,6 +1,7 @@
 import com.pengrad.telegrambot.TelegramBot
 import com.pengrad.telegrambot.UpdatesListener
 import com.pengrad.telegrambot.model.Location
+import com.pengrad.telegrambot.request.SendLocation
 import com.pengrad.telegrambot.request.SendMessage
 import com.pengrad.telegrambot.response.SendResponse
 import org.apache.commons.csv.CSVFormat
@@ -26,13 +27,15 @@ fun main(args: Array<String>) {
 // Register for updates
     bot.setUpdatesListener { updates ->
         updates.forEach { update ->
+            val chatId: Long = update.message().chat().id()
             update.message()?.location()?.let {location ->
                 val resultBusStop = busStopData.busStops.minBy { it.location.distance(location) }
-
+                bot.execute(SendMessage(chatId, resultBusStop.toString()))
+                bot.execute(SendLocation(chatId, resultBusStop.location.latitude,resultBusStop.location.longitude))
 
 
                 println(resultBusStop) } ?: run {
-                val chatId: Long = update.message().chat().id()
+
                 val response: SendResponse =
                     bot.execute(SendMessage(chatId, "Пришлите, пожалуйста, ваше местоположение"))
             }
@@ -84,7 +87,11 @@ data class BusStop(
     val name: String,
     val routes: String,
     val location: BusStopLocation
-)
+){
+    override fun toString(): String {
+        return "Остановка $name находится по адресу $adress.\nДоступные маршруты $routes.\nhttps://www.google.ru/maps/@${location.latitude},${location.longitude}"
+    }
+}
 
 data class BusStopLocation(val latitude: Float, val longitude: Float) {
 
