@@ -9,6 +9,8 @@ import java.io.FileReader
 import java.io.Reader
 import java.nio.file.Files
 import java.nio.file.Paths
+import kotlin.math.pow
+import kotlin.math.sqrt
 
 
 fun main(args: Array<String>) {
@@ -76,4 +78,24 @@ data class BusStop(
     val location: BusStopLocation
 )
 
-data class BusStopLocation(val latitude: Float, val longitude: Float)
+data class BusStopLocation(val latitude: Float, val longitude: Float) {
+
+    /**
+     * https://stackoverflow.com/questions/365826/calculate-distance-between-2-gps-coordinates
+     */
+    fun distance(
+        location: BusStopLocation
+    ): Double {
+        val R = 6371 // Radius of the earth
+        val latDistance = Math.toRadians(location.latitude.toDouble() - latitude)
+        val lonDistance = Math.toRadians(location.longitude.toDouble() - longitude)
+        val a = (Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
+                + (Math.cos(Math.toRadians(latitude.toDouble())) * Math.cos(Math.toRadians(location.latitude.toDouble()))
+                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2)))
+        val c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+        var distance = R * c * 1000 // convert to meters
+        val height = 0
+        distance = distance.pow(2.0) + Math.pow(height.toDouble(), 2.0)
+        return sqrt(distance)
+    }
+}
