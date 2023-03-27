@@ -1,3 +1,3 @@
 fun main(args: Array<String>) {
-    println("Message for testing")
+    println("Test from Alex Kor")
 }
