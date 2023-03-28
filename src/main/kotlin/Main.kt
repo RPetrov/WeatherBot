@@ -8,18 +8,38 @@ import java.io.FileReader
 
 fun main(args: Array<String>) {
     val bot = TelegramBot(args[0])
-    val data = Data("data\\perechen-ostanovochnyh-punktov-s-ukazaniem-vida-transporta-i-s-koordinatami-ih-mestopolozheniya.csv")
+    val data =
+        Data("data\\perechen-ostanovochnyh-punktov-s-ukazaniem-vida-transporta-i-s-koordinatami-ih-mestopolozheniya.csv")
 
     bot.setUpdatesListener { updates: List<Update?>? ->
         updates?.forEach { update ->
             val location = update?.message()?.location()
+            val chatId: Long? = update?.message()?.chat()?.id()
             if (location == null) {
-                val chatId: Long? = update?.message()?.chat()?.id()
                 val response = bot.execute(SendMessage(chatId, "Send location, pls"))
             } else {
 
-                val minData = data.bustStopList.minBy { distance(it.lattitude.toDouble(), it.longitude, location.latitude().toDouble(), location.longitude().toDouble()) }
+                val minData = data.bustStopList.minBy {
+                    distance(
+                        it.lattitude.toDouble(),
+                        it.longitude,
+                        location.latitude().toDouble(),
+                        location.longitude().toDouble()
+                    )
+                }
                 println(minData)
+                val response = bot.execute(
+                    SendMessage(
+                        chatId,
+                        "Ближайшая остановка находиться по адресу ${minData.address}"
+                    )
+                )
+                bot.execute(
+                    SendMessage(
+                        chatId,
+                        "ссылка на Яндекс карты: https://yandex.ru/maps/?ll=${minData.lattitude},${minData.longitude}&z=12&l=map"
+                    )
+                )
             }
         }
 //        println(updates)
@@ -32,6 +52,7 @@ fun main(args: Array<String>) {
 class Data(fileName: String) {
 
     val bustStopList = mutableListOf<BusStop>()
+
     init {
         val reader = FileReader(fileName)
 
