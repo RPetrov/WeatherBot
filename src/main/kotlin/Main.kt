@@ -8,6 +8,7 @@ import java.io.FileReader
 
 fun main(args: Array<String>) {
     val bot = TelegramBot(args[0])
+    val data = Data("data\\perechen-ostanovochnyh-punktov-s-ukazaniem-vida-transporta-i-s-koordinatami-ih-mestopolozheniya.csv")
 
     bot.setUpdatesListener { updates: List<Update?>? ->
         updates?.forEach { update ->
@@ -16,14 +17,16 @@ fun main(args: Array<String>) {
                 val chatId: Long? = update?.message()?.chat()?.id()
                 val response = bot.execute(SendMessage(chatId, "Send location, pls"))
             } else {
-                println(location)
+
+                val minData = data.bustStopList.minBy { distance(it.lattitude.toDouble(), it.longitude, location.latitude().toDouble(), location.longitude().toDouble()) }
+                println(minData)
             }
         }
 //        println(updates)
         UpdatesListener.CONFIRMED_UPDATES_ALL
     }
 
-    val data = Data("data\\perechen-ostanovochnyh-punktov-s-ukazaniem-vida-transporta-i-s-koordinatami-ih-mestopolozheniya.csv")
+
 }
 
 class Data(fileName: String) {
@@ -42,13 +45,13 @@ class Data(fileName: String) {
         for (record in records) {
             val name = record.get(3)
             val address = record.get(5)
-            val lattitude = record.get(7).split(",")[0].toFloat()
-            val longitude = record.get(7).split(",")[1].toFloat()
+            val lattitude = record.get(7).split(",")[0].toDouble()
+            val longitude = record.get(7).split(",")[1].toDouble()
             bustStopList.add(BusStop(name, address, lattitude, longitude))
         }
     }
 }
 
-data class BusStop(val name: String, val address: String, val lattitude: Float, val longitude: Float) {
+data class BusStop(val name: String, val address: String, val lattitude: Double, val longitude: Double) {
 
 }
