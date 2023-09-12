@@ -28,14 +28,44 @@ fun main(args: Array<String>) {
             updates?.forEach { message ->
                 val chatId: Long? = message?.message()?.chat()?.id()
                 val location = message?.message()?.location()
-                if (location == null) {
-                    println(bot.execute(SendMessage(chatId, "Пришлите, пожалуйста, местоположение")))
-                } else {
+                val locText = message?.message()?.text()
+                if (location == null && locText != null && locText.isNotBlank()) {
+                    println(locText)
+                    try {
+                        val currentWether = getCurrentWether(
+                            openWeatherClient,
+                            locText
+                        )
+                        println(bot.execute(SendMessage(chatId, currentWether)))
+                        val forCust = getTomorrowWeather(
+                            openWeatherClient,
+                            locText
+                        )
+                        println(bot.execute(SendMessage(chatId, forCust)))
+
+                    }catch (e: Exception){
+                        e.printStackTrace()
+                    }
+
+
+
+                }
+                else if (location != null) {
                     println(location)
-                    val currentWether = getCurrentWether(openWeatherClient, location.latitude().toDouble(), location.longitude().toDouble())
+                    val currentWether = getCurrentWether(
+                        openWeatherClient,
+                        location.latitude().toDouble(),
+                        location.longitude().toDouble()
+                    )
                     println(bot.execute(SendMessage(chatId, currentWether)))
-                    val forCust = getTomorrowWeather(openWeatherClient, location.latitude().toDouble(), location.longitude().toDouble())
+                    val forCust = getTomorrowWeather(
+                        openWeatherClient,
+                        location.latitude().toDouble(),
+                        location.longitude().toDouble()
+                    )
                     println(bot.execute(SendMessage(chatId, forCust)))
+                } else {
+                    println(bot.execute(SendMessage(chatId, "Пришлите, пожалуйста, местоположение")))
                 }
             }
             UpdatesListener.CONFIRMED_UPDATES_ALL
@@ -51,7 +81,8 @@ fun main(args: Array<String>) {
         }
     }
 }
-fun getCurrentWether (openWeatherClient : OpenWeatherMapClient, lat :Double, lon : Double) : String {
+
+fun getCurrentWether(openWeatherClient: OpenWeatherMapClient, lat: Double, lon: Double): String {
     val weather = openWeatherClient
         .currentWeather()
         .single()
@@ -63,13 +94,36 @@ fun getCurrentWether (openWeatherClient : OpenWeatherMapClient, lat :Double, lon
     return weather
 }
 
-fun getTomorrowWeather (openWeatherClient : OpenWeatherMapClient, lat :Double, lon : Double) : String {
+fun getTomorrowWeather(openWeatherClient: OpenWeatherMapClient, lat: Double, lon: Double): String {
     val weather = openWeatherClient
-            .forecast5Day3HourStep()
+        .forecast5Day3HourStep()
         .byCoordinate(Coordinate.of(lat, lon))
         .language(Language.RUSSIAN)
         .unitSystem(UnitSystem.METRIC)
         .retrieve()
-        .asJava().weatherForecasts.subList(0, 8).map{it.toString()}.joinToString("\n")
+        .asJava().weatherForecasts.subList(0, 8).map { it.toString() }.joinToString("\n")
+    return weather
+}
+
+fun getCurrentWether(openWeatherClient: OpenWeatherMapClient, nameCity: String): String {
+    val weather = openWeatherClient
+        .currentWeather()
+        .single()
+        .byCityName(nameCity)
+        .language(Language.RUSSIAN)
+        .unitSystem(UnitSystem.METRIC)
+        .retrieve()
+        .asJava().toString()
+    return weather
+}
+
+fun getTomorrowWeather(openWeatherClient: OpenWeatherMapClient, nameCity: String): String {
+    val weather = openWeatherClient
+        .forecast5Day3HourStep()
+        .byCityName(nameCity)
+        .language(Language.RUSSIAN)
+        .unitSystem(UnitSystem.METRIC)
+        .retrieve()
+        .asJava().weatherForecasts.subList(0, 8).map { it.toString() }.joinToString("\n")
     return weather
 }
