@@ -29,13 +29,13 @@ fun main(args: Array<String>) {
                 val chatId: Long? = message?.message()?.chat()?.id()
                 val location = message?.message()?.location()
                 if (location == null) {
-                    val response = bot.execute(SendMessage(chatId, "Пришлите, пожалуйста, местоположение"))
-                    println(response)
+                    println(bot.execute(SendMessage(chatId, "Пришлите, пожалуйста, местоположение")))
                 } else {
                     println(location)
                     val currentWether = getCurrentWether(openWeatherClient, location.latitude().toDouble(), location.longitude().toDouble())
-                    val response = bot.execute(SendMessage(chatId, currentWether))
-                    println(response)
+                    println(bot.execute(SendMessage(chatId, currentWether)))
+                    val forCust = getTomorrowWeather(openWeatherClient, location.latitude().toDouble(), location.longitude().toDouble())
+                    println(bot.execute(SendMessage(chatId, forCust)))
                 }
             }
             UpdatesListener.CONFIRMED_UPDATES_ALL
@@ -60,5 +60,16 @@ fun getCurrentWether (openWeatherClient : OpenWeatherMapClient, lat :Double, lon
         .unitSystem(UnitSystem.METRIC)
         .retrieve()
         .asJava().toString()
+    return weather
+}
+
+fun getTomorrowWeather (openWeatherClient : OpenWeatherMapClient, lat :Double, lon : Double) : String {
+    val weather = openWeatherClient
+            .forecast5Day3HourStep()
+        .byCoordinate(Coordinate.of(lat, lon))
+        .language(Language.RUSSIAN)
+        .unitSystem(UnitSystem.METRIC)
+        .retrieve()
+        .asJava().weatherForecasts.subList(0, 8).map{it.toString()}.joinToString("\n")
     return weather
 }
