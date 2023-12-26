@@ -31,15 +31,19 @@ fun main(args: Array<String>) {
                     return@forEach
                 }
 
-                val weatherJava = OpenWeatherMapClient("<TOKEN>")
+                val weatherJava = OpenWeatherMapClient("token")
                     .forecast5Day3HourStep()
-                    .byCoordinate(Coordinate.of(coordinate.longitude().toDouble(), coordinate.latitude().toDouble()))
+                    .byCoordinate(Coordinate.of(coordinate.latitude().toDouble(), coordinate.longitude().toDouble()))
                     .language(Language.RUSSIAN)
                     .unitSystem(UnitSystem.METRIC)
                     .retrieve()
                     .asJava()
 
-                val response = bot.execute(SendMessage(chatId, weatherJava.toString()))
+                val weatherForecast = weatherJava.weatherForecasts.first()
+                val weatherForecastString =  "Максимальная температура -{${weatherForecast.temperature.maxTemperature}} \n" +
+                        "Ощущается как - {${weatherForecast.temperature.feelsLike}} \n" + "value ${weatherForecast.temperature.value}"
+
+                val response = bot.execute(SendMessage(chatId, weatherForecastString))
             }
 
             UpdatesListener.CONFIRMED_UPDATES_ALL
