@@ -1,8 +1,13 @@
+import com.github.prominence.openweathermap.api.OpenWeatherMapClient
+import com.github.prominence.openweathermap.api.enums.Language
+import com.github.prominence.openweathermap.api.enums.UnitSystem
+import com.github.prominence.openweathermap.api.model.Coordinate
 import com.pengrad.telegrambot.TelegramBot
 import com.pengrad.telegrambot.TelegramException
 import com.pengrad.telegrambot.UpdatesListener
 import com.pengrad.telegrambot.model.Update
 import com.pengrad.telegrambot.request.SendMessage
+
 
 fun main(args: Array<String>) {
     val token = args.getOrNull(0) ?: run {
@@ -19,11 +24,26 @@ fun main(args: Array<String>) {
         { updates: List<Update?>? ->
             println(updates)
             updates?.forEach {
-                val chatId = it?.message()?.chat()?.id()?: return@forEach
-                val response = bot.execute(SendMessage(chatId, it.message().text()))
+                val chatId = it?.message()?.chat()?.id() ?: return@forEach
+
+                val coordinate = it.message()?.location() ?: run {
+                    bot.execute(SendMessage(chatId, "Поделитесь координатой"))
+                    return@forEach
+                }
+
+                val weatherJava = OpenWeatherMapClient("<TOKEN>")
+                    .forecast5Day3HourStep()
+                    .byCoordinate(Coordinate.of(coordinate.longitude().toDouble(), coordinate.latitude().toDouble()))
+                    .language(Language.RUSSIAN)
+                    .unitSystem(UnitSystem.METRIC)
+                    .retrieve()
+                    .asJava()
+
+                val response = bot.execute(SendMessage(chatId, weatherJava.toString()))
             }
 
-            UpdatesListener.CONFIRMED_UPDATES_ALL },
+            UpdatesListener.CONFIRMED_UPDATES_ALL
+        },
         { e: TelegramException ->
             if (e.response() != null) {
                 // got bad response from telegram
